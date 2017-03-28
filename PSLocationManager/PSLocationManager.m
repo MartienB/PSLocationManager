@@ -45,6 +45,8 @@ static const NSUInteger kGPSRefinementInterval = 15; // the number of seconds at
 static const CGFloat kSpeedNotSet = -1.0;
 
 #import "PSLocationManager.h"
+#import "PSShareModel.h"
+#import "PSLocationManager.h"
 
 @interface PSLocationManager ()
 
@@ -64,6 +66,8 @@ static const CGFloat kSpeedNotSet = -1.0;
 @property (nonatomic) BOOL readyToExposeDistanceAndSpeed;
 @property (nonatomic) BOOL checkingSignalStrength;
 @property (nonatomic) BOOL allowMaximumAcceptableAccuracy;
+
+@property BOOL isTracking;
 
 - (void)checkSustainedSignalStrength;
 - (void)requestNewLocation;
@@ -92,6 +96,7 @@ static const CGFloat kSpeedNotSet = -1.0;
 @synthesize readyToExposeDistanceAndSpeed = _readyToExposeDistanceAndSpeed;
 @synthesize allowMaximumAcceptableAccuracy = _allowMaximumAcceptableAccuracy;
 @synthesize checkingSignalStrength = _checkingSignalStrength;
+@synthesize shareModel = _shareModel;
 
 + (id)sharedLocationManager {
     static dispatch_once_t pred;
@@ -105,6 +110,13 @@ static const CGFloat kSpeedNotSet = -1.0;
 
 - (id)init {
     if ((self = [super init])) {
+        
+        _isTracking = NO;
+        
+        self.shareModel = [PSShareModel sharedModel];
+        self.shareModel.myLocationArray = [[NSMutableArray alloc] init];
+        
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(applicationEnterBackground) name:UIApplicationDidEnterBackgroundNotification object:nil];
         
         [self.locationManager requestAlwaysAuthorization];
         if ([CLLocationManager locationServicesEnabled]) {
@@ -121,6 +133,46 @@ static const CGFloat kSpeedNotSet = -1.0;
     }
     
     return self;
+}
+
+- (void)applicationEnterBackground {
+    if (_isTracking){
+        PSLocationManager *pslocationManager = [PSLocationManager sharedLocationManager];
+        CLLocationManager *locationManager = pslocationManager.locationManager;
+        locationManager.delegate = self;
+        self.locationManager.desiredAccuracy = kCLLocationAccuracyBest;
+        self.locationManager.distanceFilter = kDistanceFilter;
+        self.locationManager.headingFilter = kHeadingFilter;
+        
+//        [locationManager requestAlwaysAuthorization];
+        
+//        [locationManager startUpdatingLocation];
+        
+        [self startLocationUpdates];
+        
+        //Use the BackgroundTaskManager to manage all the background Task
+        self.shareModel.bgTask = [PSBackgroundTaskManager sharedBackgroundTaskManager];
+        [self.shareModel.bgTask beginNewBackgroundTask];
+    }
+}
+
+- (void) restartLocationUpdates
+{
+    NSLog(@"restartLocationUpdates");
+    
+    if (self.shareModel.timer) {
+        [self.shareModel.timer invalidate];
+        self.shareModel.timer = nil;
+    }
+    PSLocationManager *pslocationManager = [PSLocationManager sharedLocationManager];
+    CLLocationManager *locationManager = pslocationManager.locationManager;
+    
+    locationManager.delegate = self;
+    self.locationManager.desiredAccuracy = kCLLocationAccuracyBest;
+    self.locationManager.distanceFilter = kDistanceFilter;
+    self.locationManager.headingFilter = kHeadingFilter;
+    
+    [self startLocationUpdates];
 }
 
 - (void)dealloc {
@@ -222,21 +274,29 @@ static const CGFloat kSpeedNotSet = -1.0;
 }
 
 - (BOOL)startLocationUpdates {
+    _isTracking = YES;
     [self.locationManager requestAlwaysAuthorization];
     
     if ([CLLocationManager locationServicesEnabled]) {
-        self.readyToExposeDistanceAndSpeed = YES;
+        CLAuthorizationStatus authorizationStatus= [CLLocationManager authorizationStatus];
         
-        [self.locationManager startUpdatingLocation];
-        [self.locationManager startUpdatingHeading];
+        if(authorizationStatus == kCLAuthorizationStatusDenied || authorizationStatus == kCLAuthorizationStatusRestricted){
+            NSLog(@"authorizationStatus failed");
+            return NO;
+        }else {
+            self.readyToExposeDistanceAndSpeed = YES;
+            
+            [self.locationManager startUpdatingLocation];
+            [self.locationManager startUpdatingHeading];
+            
+            if (self.pauseDeltaStart > 0) {
+                self.pauseDelta += ([NSDate timeIntervalSinceReferenceDate] - self.pauseDeltaStart);
+                self.pauseDeltaStart = 0;
+            }
         
-        if (self.pauseDeltaStart > 0) {
-            self.pauseDelta += ([NSDate timeIntervalSinceReferenceDate] - self.pauseDeltaStart);
-            self.pauseDeltaStart = 0;
+            return YES;
         }
-        
-        return YES;
-    } else {
+    }else {
         NSLog(@"locationServicesEnabled false");
         UIAlertView *servicesDisabledAlert = [[UIAlertView alloc] initWithTitle:@"Location Services Disabled" message:@"You currently have all location services for this device disabled" delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil];
         [servicesDisabledAlert show];
@@ -245,6 +305,13 @@ static const CGFloat kSpeedNotSet = -1.0;
 }
 
 - (void)stopLocationUpdates {
+    
+    if (self.shareModel.timer) {
+        [self.shareModel.timer invalidate];
+        self.shareModel.timer = nil;
+    }
+    
+    _isTracking = NO;
     [self.locationPingTimer invalidate];
     [self.locationManager stopUpdatingLocation];
     [self.locationManager stopUpdatingHeading];
@@ -259,6 +326,20 @@ static const CGFloat kSpeedNotSet = -1.0;
     self.pauseDelta = 0;
     self.pauseDeltaStart = 0;
 }
+
+
+
+
+
+//Stop the locationManager
+-(void)stopLocationDelayBy10Seconds{
+
+    [_locationManager stopUpdatingLocation];
+    
+    NSLog(@"locationManager stop Updating after 10 seconds");
+}
+
+
 
 #pragma mark CLLocationManagerDelegate
 
@@ -349,8 +430,40 @@ static const CGFloat kSpeedNotSet = -1.0;
             if ([self.delegate respondsToSelector:@selector(locationManager:waypoint:calculatedSpeed:)]) {
                 [self.delegate locationManager:self waypoint:self.lastRecordedLocation calculatedSpeed:self.currentSpeed];
             }
+            
+            
+            
+            
         }
     }
+    
+    
+    //If the timer still valid, return it (Will not run the code below)
+    if (self.shareModel.timer) {
+        return;
+    }
+    
+    self.shareModel.bgTask = [PSBackgroundTaskManager sharedBackgroundTaskManager];
+    [self.shareModel.bgTask beginNewBackgroundTask];
+    
+    //Restart the locationManager after 1 minute
+    self.shareModel.timer = [NSTimer scheduledTimerWithTimeInterval:60 target:self
+                                                           selector:@selector(restartLocationUpdates)
+                                                           userInfo:nil
+                                                            repeats:NO];
+    
+    //Will only stop the locationManager after 10 seconds, so that we can get some accurate locations
+    //The location manager will only operate for 10 seconds to save battery
+    if (self.shareModel.delay10Seconds) {
+        [self.shareModel.delay10Seconds invalidate];
+        self.shareModel.delay10Seconds = nil;
+    }
+    
+    self.shareModel.delay10Seconds = [NSTimer scheduledTimerWithTimeInterval:10 target:self
+                                                                    selector:@selector(stopLocationDelayBy10Seconds)
+                                                                    userInfo:nil
+                                                                     repeats:NO];
+    
     
     // this will be invalidated above if a new location is received before it fires
     self.locationPingTimer = [NSTimer timerWithTimeInterval:kMinimumLocationUpdateInterval target:self selector:@selector(requestNewLocation) userInfo:nil repeats:NO];
@@ -372,3 +485,4 @@ static const CGFloat kSpeedNotSet = -1.0;
 }
 
 @end
+s

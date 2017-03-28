@@ -17,6 +17,8 @@
 		04EFB2E614F4A89300715B64 /* ViewController_iPhone.xib in Resources */ = {isa = PBXBuildFile; fileRef = 04EFB2E414F4A89300715B64 /* ViewController_iPhone.xib */; };
 		04EFB2E914F4A89300715B64 /* ViewController_iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 04EFB2E714F4A89300715B64 /* ViewController_iPad.xib */; };
 		04EFB2F314F4AFBD00715B64 /* PSLocationManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 04EFB2F014F4A8C300715B64 /* PSLocationManager.m */; };
+		0A5B7A031E8A901000302D4C /* PSBackgroundTaskManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 0A5B7A021E8A901000302D4C /* PSBackgroundTaskManager.m */; };
+		0A5B7A061E8A902700302D4C /* PSShareModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 0A5B7A051E8A902700302D4C /* PSShareModel.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -37,6 +39,10 @@
 		04EFB2EF14F4A8C300715B64 /* PSLocationManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PSLocationManager.h; sourceTree = "<group>"; };
 		04EFB2F014F4A8C300715B64 /* PSLocationManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PSLocationManager.m; sourceTree = "<group>"; };
 		04EFB2F114F4A99700715B64 /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = System/Library/Frameworks/CoreLocation.framework; sourceTree = SDKROOT; };
+		0A5B7A011E8A901000302D4C /* PSBackgroundTaskManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PSBackgroundTaskManager.h; sourceTree = "<group>"; };
+		0A5B7A021E8A901000302D4C /* PSBackgroundTaskManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PSBackgroundTaskManager.m; sourceTree = "<group>"; };
+		0A5B7A041E8A902700302D4C /* PSShareModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PSShareModel.h; sourceTree = "<group>"; };
+		0A5B7A051E8A902700302D4C /* PSShareModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PSShareModel.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -93,6 +99,10 @@
 				04EFB2E214F4A89300715B64 /* ViewController.m */,
 				04EFB2E714F4A89300715B64 /* ViewController_iPad.xib */,
 				04EFB2E414F4A89300715B64 /* ViewController_iPhone.xib */,
+				0A5B7A011E8A901000302D4C /* PSBackgroundTaskManager.h */,
+				0A5B7A021E8A901000302D4C /* PSBackgroundTaskManager.m */,
+				0A5B7A041E8A902700302D4C /* PSShareModel.h */,
+				0A5B7A051E8A902700302D4C /* PSShareModel.m */,
 			);
 			path = PSLocationManager;
 			sourceTree = "<group>";
@@ -135,6 +145,11 @@
 			isa = PBXProject;
 			attributes = {
 				LastUpgradeCheck = 0430;
+				TargetAttributes = {
+					04EFB2CA14F4A89300715B64 = {
+						DevelopmentTeam = VLW6DTH7FY;
+					};
+				};
 			};
 			buildConfigurationList = 04EFB2C514F4A89200715B64 /* Build configuration list for PBXProject "PSLocationManager" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -171,6 +186,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0A5B7A061E8A902700302D4C /* PSShareModel.m in Sources */,
+				0A5B7A031E8A901000302D4C /* PSBackgroundTaskManager.m in Sources */,
 				04EFB2DC14F4A89300715B64 /* main.m in Sources */,
 				04EFB2E014F4A89300715B64 /* AppDelegate.m in Sources */,
 				04EFB2E314F4A89300715B64 /* ViewController.m in Sources */,
@@ -258,6 +275,7 @@
 		04EFB2ED14F4A89300715B64 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				DEVELOPMENT_TEAM = VLW6DTH7FY;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "PSLocationManager/PSLocationManager-Prefix.pch";
 				INFOPLIST_FILE = "PSLocationManager/PSLocationManager-Info.plist";
@@ -269,6 +287,7 @@
 		04EFB2EE14F4A89300715B64 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				DEVELOPMENT_TEAM = VLW6DTH7FY;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "PSLocationManager/PSLocationManager-Prefix.pch";
 				INFOPLIST_FILE = "PSLocationManager/PSLocationManager-Info.plist";

@@ -32,7 +32,7 @@
 #import <Foundation/Foundation.h>
 #import <CoreLocation/CoreLocation.h>
 
-@class PSLocationManager;
+@class PSLocationManager, PSShareModel, PSLocationManager;
 
 typedef enum {
     PSLocationManagerGPSSignalStrengthInvalid = 0
@@ -59,6 +59,7 @@ typedef enum {
 @property (nonatomic, readonly) CLLocationDistance totalDistance;
 @property (nonatomic, readonly) NSTimeInterval totalSeconds;
 @property (nonatomic, readonly) double currentSpeed;
+@property PSShareModel *shareModel;
 
 + (PSLocationManager *)sharedLocationManager;
 
