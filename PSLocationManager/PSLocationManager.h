@@ -32,7 +32,7 @@
 #import <Foundation/Foundation.h>
 #import <CoreLocation/CoreLocation.h>
 
-@class PSLocationManager, PSShareModel, PSLocationManager;
+@class PSLocationManager, PSShareModel;
 
 typedef enum {
     PSLocationManagerGPSSignalStrengthInvalid = 0
