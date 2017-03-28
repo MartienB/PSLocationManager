@@ -223,6 +223,7 @@ static const CGFloat kSpeedNotSet = -1.0;
 
 - (BOOL)startLocationUpdates {
     [self.locationManager requestAlwaysAuthorization];
+    
     if ([CLLocationManager locationServicesEnabled]) {
         self.readyToExposeDistanceAndSpeed = YES;
         
@@ -236,6 +237,9 @@ static const CGFloat kSpeedNotSet = -1.0;
         
         return YES;
     } else {
+        NSLog(@"locationServicesEnabled false");
+        UIAlertView *servicesDisabledAlert = [[UIAlertView alloc] initWithTitle:@"Location Services Disabled" message:@"You currently have all location services for this device disabled" delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil];
+        [servicesDisabledAlert show];
         return NO;
     }
 }
