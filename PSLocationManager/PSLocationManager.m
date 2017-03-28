@@ -363,4 +363,3 @@ static const CGFloat kSpeedNotSet = -1.0;
 }
 
 @end
-s

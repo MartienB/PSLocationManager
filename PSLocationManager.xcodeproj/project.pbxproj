@@ -19,6 +19,8 @@
 		04EFB2F314F4AFBD00715B64 /* PSLocationManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 04EFB2F014F4A8C300715B64 /* PSLocationManager.m */; };
 		0A5B7A031E8A901000302D4C /* PSBackgroundTaskManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 0A5B7A021E8A901000302D4C /* PSBackgroundTaskManager.m */; };
 		0A5B7A061E8A902700302D4C /* PSShareModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 0A5B7A051E8A902700302D4C /* PSShareModel.m */; };
+		0A5B7A081E8AAD7700302D4C /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0A5B7A071E8AAD7700302D4C /* AVFoundation.framework */; };
+		0A5B7A091E8AAD9E00302D4C /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04EFB2F114F4A99700715B64 /* CoreLocation.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -43,6 +45,7 @@
 		0A5B7A021E8A901000302D4C /* PSBackgroundTaskManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PSBackgroundTaskManager.m; sourceTree = "<group>"; };
 		0A5B7A041E8A902700302D4C /* PSShareModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PSShareModel.h; sourceTree = "<group>"; };
 		0A5B7A051E8A902700302D4C /* PSShareModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PSShareModel.m; sourceTree = "<group>"; };
+		0A5B7A071E8AAD7700302D4C /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -50,6 +53,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0A5B7A091E8AAD9E00302D4C /* CoreLocation.framework in Frameworks */,
+				0A5B7A081E8AAD7700302D4C /* AVFoundation.framework in Frameworks */,
 				04EFB2D014F4A89300715B64 /* UIKit.framework in Frameworks */,
 				04EFB2D214F4A89300715B64 /* Foundation.framework in Frameworks */,
 				04EFB2D414F4A89300715B64 /* CoreGraphics.framework in Frameworks */,
@@ -79,6 +84,7 @@
 		04EFB2CE14F4A89300715B64 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				0A5B7A071E8AAD7700302D4C /* AVFoundation.framework */,
 				04EFB2F114F4A99700715B64 /* CoreLocation.framework */,
 				04EFB2CF14F4A89300715B64 /* UIKit.framework */,
 				04EFB2D114F4A89300715B64 /* Foundation.framework */,
@@ -307,6 +313,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "PSLocationManager/PSLocationManager-Prefix.pch";
 				INFOPLIST_FILE = "PSLocationManager/PSLocationManager-Info.plist";
+				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.perspecdev.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = app;
@@ -320,6 +327,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "PSLocationManager/PSLocationManager-Prefix.pch";
 				INFOPLIST_FILE = "PSLocationManager/PSLocationManager-Info.plist";
+				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.perspecdev.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = app;
