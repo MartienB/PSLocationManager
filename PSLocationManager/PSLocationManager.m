@@ -346,7 +346,129 @@ static const CGFloat kSpeedNotSet = -1.0;
 - (void)locationManager:(CLLocationManager *)manager didUpdateToLocation:(CLLocation *)newLocation fromLocation:(CLLocation *)oldLocation {
     // since the oldLocation might be from some previous use of core location, we need to make sure we're getting data from this run
     if (oldLocation == nil) return;
-   }
+    BOOL isStaleLocation = ([oldLocation.timestamp compare:self.startTimestamp] == NSOrderedAscending);
+    
+    [self.locationPingTimer invalidate];
+    
+    if (newLocation.horizontalAccuracy <= kRequiredHorizontalAccuracy) {
+        self.signalStrength = PSLocationManagerGPSSignalStrengthStrong;
+    } else {
+        self.signalStrength = PSLocationManagerGPSSignalStrengthWeak;
+    }
+    
+    double horizontalAccuracy;
+    if (self.allowMaximumAcceptableAccuracy) {
+        horizontalAccuracy = kMaximumAcceptableHorizontalAccuracy;
+    } else {
+        horizontalAccuracy = kRequiredHorizontalAccuracy;
+    }
+    
+    if (!isStaleLocation && newLocation.horizontalAccuracy >= 0 && newLocation.horizontalAccuracy <= horizontalAccuracy) {
+        
+        [self.locationHistory addObject:newLocation];
+        if ([self.locationHistory count] > kNumLocationHistoriesToKeep) {
+            [self.locationHistory removeObjectAtIndex:0];
+        }
+        
+        BOOL canUpdateDistanceAndSpeed = NO;
+        if ([self.locationHistory count] >= kMinLocationsNeededToUpdateDistanceAndSpeed) {
+            canUpdateDistanceAndSpeed = YES && self.readyToExposeDistanceAndSpeed;
+        }
+        
+        if (self.forceDistanceAndSpeedCalculation || [NSDate timeIntervalSinceReferenceDate] - self.lastDistanceAndSpeedCalculation > kDistanceAndSpeedCalculationInterval) {
+            self.forceDistanceAndSpeedCalculation = NO;
+            self.lastDistanceAndSpeedCalculation = [NSDate timeIntervalSinceReferenceDate];
+            
+            CLLocation *lastLocation = (self.lastRecordedLocation != nil) ? self.lastRecordedLocation : oldLocation;
+            
+            CLLocation *bestLocation = nil;
+            CGFloat bestAccuracy = kRequiredHorizontalAccuracy;
+            for (CLLocation *location in self.locationHistory) {
+                if ([NSDate timeIntervalSinceReferenceDate] - [location.timestamp timeIntervalSinceReferenceDate] <= kValidLocationHistoryDeltaInterval) {
+                    if (location.horizontalAccuracy <= bestAccuracy && location != lastLocation) {
+                        bestAccuracy = location.horizontalAccuracy;
+                        bestLocation = location;
+                    }
+                }
+            }
+            if (bestLocation == nil) bestLocation = newLocation;
+            
+            CLLocationDistance distance = [bestLocation distanceFromLocation:lastLocation];
+            if (canUpdateDistanceAndSpeed) self.totalDistance += distance;
+            self.lastRecordedLocation = bestLocation;
+            
+            NSTimeInterval timeSinceLastLocation = [bestLocation.timestamp timeIntervalSinceDate:lastLocation.timestamp];
+            if (timeSinceLastLocation > 0) {
+                CGFloat speed = distance / timeSinceLastLocation;
+                if (speed <= 0 && [self.speedHistory count] == 0) {
+                    // don't add a speed of 0 as the first item, since it just means we're not moving yet
+                } else {
+                    [self.speedHistory addObject:[NSNumber numberWithDouble:speed]];
+                }
+                if ([self.speedHistory count] > kNumSpeedHistoriesToAverage) {
+                    [self.speedHistory removeObjectAtIndex:0];
+                }
+                if ([self.speedHistory count] > 1) {
+                    double totalSpeed = 0;
+                    for (NSNumber *speedNumber in self.speedHistory) {
+                        totalSpeed += [speedNumber doubleValue];
+                    }
+                    if (canUpdateDistanceAndSpeed) {
+                        double newSpeed = totalSpeed / (double)[self.speedHistory count];
+                        if (kPrioritizeFasterSpeeds > 0 && speed > newSpeed) {
+                            newSpeed = speed;
+                            [self.speedHistory removeAllObjects];
+                            for (int i=0; i<kNumSpeedHistoriesToAverage; i++) {
+                                [self.speedHistory addObject:[NSNumber numberWithDouble:newSpeed]];
+                            }
+                        }
+                        self.currentSpeed = newSpeed;
+                    }
+                }
+            }
+            
+            if ([self.delegate respondsToSelector:@selector(locationManager:waypoint:calculatedSpeed:)]) {
+                [self.delegate locationManager:self waypoint:self.lastRecordedLocation calculatedSpeed:self.currentSpeed];
+            }
+            
+            
+            
+            
+        }
+    }
+    
+    
+    //If the timer still valid, return it (Will not run the code below)
+    if (self.shareModel.timer) {
+        return;
+    }
+    
+    self.shareModel.bgTask = [PSBackgroundTaskManager sharedBackgroundTaskManager];
+    [self.shareModel.bgTask beginNewBackgroundTask];
+    
+    //Restart the locationManager after 1 minute
+    self.shareModel.timer = [NSTimer scheduledTimerWithTimeInterval:60 target:self
+                                                           selector:@selector(restartLocationUpdates)
+                                                           userInfo:nil
+                                                            repeats:NO];
+    
+    //Will only stop the locationManager after 10 seconds, so that we can get some accurate locations
+    //The location manager will only operate for 10 seconds to save battery
+    if (self.shareModel.delay10Seconds) {
+        [self.shareModel.delay10Seconds invalidate];
+        self.shareModel.delay10Seconds = nil;
+    }
+    
+    self.shareModel.delay10Seconds = [NSTimer scheduledTimerWithTimeInterval:10 target:self
+                                                                    selector:@selector(stopLocationDelayBy10Seconds)
+                                                                    userInfo:nil
+                                                                     repeats:NO];
+    
+    
+    // this will be invalidated above if a new location is received before it fires
+    self.locationPingTimer = [NSTimer timerWithTimeInterval:kMinimumLocationUpdateInterval target:self selector:@selector(requestNewLocation) userInfo:nil repeats:NO];
+    [[NSRunLoop mainRunLoop] addTimer:self.locationPingTimer forMode:NSRunLoopCommonModes];
+}
 
 - (void)locationManager:(CLLocationManager *)manager didUpdateHeading:(CLHeading *)newHeading {
     // we don't really care about the new heading.  all we care about is calculating the current distance from the previous distance early if the user changed directions
