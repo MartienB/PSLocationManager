@@ -126,6 +126,9 @@ static const CGFloat kSpeedNotSet = -1.0;
             self.locationManager.distanceFilter = kDistanceFilter;
             self.locationManager.headingFilter = kHeadingFilter;
         }
+        if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 9) {
+            _locationManager.allowsBackgroundLocationUpdates = YES;
+        }
         
         self.locationHistory = [NSMutableArray arrayWithCapacity:kNumLocationHistoriesToKeep];
         self.speedHistory = [NSMutableArray arrayWithCapacity:kNumSpeedHistoriesToAverage];
@@ -143,10 +146,14 @@ static const CGFloat kSpeedNotSet = -1.0;
         self.locationManager.desiredAccuracy = kCLLocationAccuracyBest;
         self.locationManager.distanceFilter = kDistanceFilter;
         self.locationManager.headingFilter = kHeadingFilter;
+        if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 9) {
+            _locationManager.allowsBackgroundLocationUpdates = YES;
+        }
         
-//        [locationManager requestAlwaysAuthorization];
         
-//        [locationManager startUpdatingLocation];
+        //        [locationManager requestAlwaysAuthorization];
+        
+        //        [locationManager startUpdatingLocation];
         
         [self startLocationUpdates];
         
@@ -156,7 +163,7 @@ static const CGFloat kSpeedNotSet = -1.0;
     }
 }
 
-- (void) restartLocationUpdates
+- (void)restartLocationUpdates
 {
     NSLog(@"restartLocationUpdates");
     
@@ -164,13 +171,17 @@ static const CGFloat kSpeedNotSet = -1.0;
         [self.shareModel.timer invalidate];
         self.shareModel.timer = nil;
     }
-    PSLocationManager *pslocationManager = [PSLocationManager sharedLocationManager];
-    CLLocationManager *locationManager = pslocationManager.locationManager;
+    //    PSLocationManager *pslocationManager = [PSLocationManager sharedLocationManager];
+    //    CLLocationManager *locationManager = pslocationManager.locationManager;
     
-    locationManager.delegate = self;
-    self.locationManager.desiredAccuracy = kCLLocationAccuracyBest;
-    self.locationManager.distanceFilter = kDistanceFilter;
-    self.locationManager.headingFilter = kHeadingFilter;
+    _locationManager.delegate = self;
+    _locationManager.desiredAccuracy = kCLLocationAccuracyBest;
+    _locationManager.distanceFilter = kDistanceFilter;
+    _locationManager.headingFilter = kHeadingFilter;
+    if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 9) {
+        _locationManager.allowsBackgroundLocationUpdates = YES;
+    }
+    
     
     [self startLocationUpdates];
 }
@@ -293,7 +304,7 @@ static const CGFloat kSpeedNotSet = -1.0;
                 self.pauseDelta += ([NSDate timeIntervalSinceReferenceDate] - self.pauseDeltaStart);
                 self.pauseDeltaStart = 0;
             }
-        
+            
             return YES;
         }
     }else {
@@ -333,7 +344,7 @@ static const CGFloat kSpeedNotSet = -1.0;
 
 //Stop the locationManager
 -(void)stopLocationDelayBy10Seconds{
-
+    
     [_locationManager stopUpdatingLocation];
     
     NSLog(@"locationManager stop Updating after 10 seconds");
@@ -440,14 +451,15 @@ static const CGFloat kSpeedNotSet = -1.0;
     
     //If the timer still valid, return it (Will not run the code below)
     if (self.shareModel.timer) {
+        //NSLog(@"MFLog: timer still valid");
         return;
     }
-    
+    NSLog(@"MFLog: timer  invalid (creat new background task)");
     self.shareModel.bgTask = [PSBackgroundTaskManager sharedBackgroundTaskManager];
     [self.shareModel.bgTask beginNewBackgroundTask];
     
     //Restart the locationManager after 1 minute
-    self.shareModel.timer = [NSTimer scheduledTimerWithTimeInterval:60 target:self
+    self.shareModel.timer = [NSTimer scheduledTimerWithTimeInterval:30 target:self
                                                            selector:@selector(restartLocationUpdates)
                                                            userInfo:nil
                                                             repeats:NO];
